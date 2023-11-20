@@ -246,5 +246,60 @@ const getProductCount = async (req: Request, res: Response) => {
     }
 };
 
+//getFeatureProducts
+const getFeatureProducts = async (req: Request, res: Response) => {
+    try {
+        const count = req.params.count ? req.params.count : 0
+        const products = await Product.find({isFeatured : true}).limit(+count);
+        if(products.length === 0){
+            res.status(500).json({
+                success : false,
+                message : "No featured products found in the database"
+            })
+        }
+        else{
+            res.status(200).json({
+                products
+            });
+        }
+        
 
-export { addProduct,getSingleProduct,getAllProducts,updateProduct, deleteProduct,getProductCount};
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+}
+
+//getProductByCategories
+const getProductByCategories = async (req: Request, res: Response) => {
+     let filter : any = {};
+     if(typeof req.query.categories === 'string') {
+        filter = { category: { $in: req.query.categories.split(',') } };
+     }
+    try {
+        const products = await Product.find(filter).populate('category');
+        // console.log("product category is : ", product)
+        
+        if (!products || products.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Product not found'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            products
+        });
+    } catch (error) {
+        console.error("Error: ", error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+}
+
+export { addProduct,getSingleProduct,getAllProducts,updateProduct, deleteProduct,getProductCount,getFeatureProducts, getProductByCategories};

@@ -1,5 +1,5 @@
 import express from 'express';
-import { addProduct , getSingleProduct, getAllProducts,updateProduct, deleteProduct, getProductCount}  from '../controllers/productController';
+import { addProduct , getSingleProduct, getAllProducts,updateProduct, deleteProduct, getProductCount, getFeatureProducts, getProductByCategories}  from '../controllers/productController';
 const router = express.Router();
 import bodyParser = require('body-parser');
 import morgan = require('morgan');
@@ -15,4 +15,6 @@ router.get('/getAllProducts', getAllProducts)
 router.put('/updateProduct/:id', updateProduct)
 router.delete('/deleteProduct/:id', deleteProduct)
 router.get('/getProductCount',getProductCount)
+router.get('/getFeatureProducts/:count', getFeatureProducts)
+router.get('/getProductByCategories', getProductByCategories)
 export default router;
