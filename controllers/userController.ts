@@ -2,51 +2,47 @@ import { Request, Response } from 'express';
 import User, {UserDocument} from '../models/userModel';
 import nodemailer from 'nodemailer';
 import jwt from 'jsonwebtoken';
+import isAdmin from '../middleware/role';
+import Admin,{ AdminDocument } from '../models/adminModel';
+
 import dotenv from 'dotenv';
 dotenv.config();
-// import isAdmin from '../middleware/role';
-// import Admin,{ AdminDocument } from '../models/adminModel';
 
 
-// interface CustomRequest extends Request {
-//     admin?: AdminDocument;
-// }
 
-// Register User
-const userRegister = async (req: Request, res: Response) => {
+interface CustomRequest extends Request {
+    admin?: AdminDocument;
+}
+
+// Register Admin
+const adminRegister = async (req: Request, res: Response) => {
     if (!process.env.secretKey) {
         throw new Error('Secret key is not defined');
     }
     try {
-        const { name, email, password , phoneNumber, addresses,apartment} = req.body;
-        const existingUser = await User.findOne({ email });
-        if (existingUser) {
+        const { name, email, password } = req.body;
+        const existingAdmin = await Admin.findOne({ email });
+        if (existingAdmin) {
             res.status(409).json({
                 success: false,
-                message: "User already exists"
+                message: "Admin already exists"
             });
         }
-
         else {
-        // Create a new user document asynchronously
-        const newUser = await User.create({
+        // Create a new admin document asynchronously
+        const newAdmin = await Admin.create({
             name,
             email,
             password,
-            addresses,
-            phoneNumber,
-            apartment,
         });
-         
-        // Use the user document to sign the token
-        const token = jwt.sign({ id: newUser.id, name, email,
-             isAdmin: true
-             }, process.env.secretKey, { expiresIn: '5h' });
+
+        // Use the admin document to sign the token
+        const token = jwt.sign({ id: newAdmin.id, name, email, isAdmin: true }, process.env.secretKey, { expiresIn: '5h' });
 
         res.status(201).json({
             success: true,
             // token,
-            message: `User saved successfully with token: ${token}`,
+            message: `Admin saved successfully with token: ${token}`,
         });
     }
     } catch (error) {
@@ -56,10 +52,95 @@ const userRegister = async (req: Request, res: Response) => {
             message: 'Internal server error',
         });
     }
-}; 
+};
+
+// createUser
+const addUser = async (req: CustomRequest, res: Response) => {
+    const { name, email, password , phoneNumber, addresses,apartment} = req.body;
+
+console.log("req.admin.isAdmin is: ", req.admin?.isAdmin)
+     
+    if (!(req.admin?.isAdmin)) {
+        return res.status(403).json({
+            success: false,
+            message: 'Permission denied. Only admin users can add users.',
+        });
+    }
+
+    try {
+        // Create a new user document
+        const newUser = await User.create({
+            name,
+            email,
+            password,
+            phoneNumber,
+            apartment,
+            addresses,
+        });
+
+        res.status(201).json({
+            success: true,
+            user: newUser,
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error',
+        });
+    }
+};
+
+
+
+// Register User
+// const userRegister = async (req: Request, res: Response) => {
+//     if (!process.env.secretKey) {
+//         throw new Error('Secret key is not defined');
+//     }
+//     try {
+//         const { name, email, password , phoneNumber, addresses,apartment} = req.body;
+//         const existingUser = await User.findOne({ email });
+//         if (existingUser) {
+//             res.status(409).json({
+//                 success: false,
+//                 message: "User already exists"
+//             });
+//         }
+
+//         else {
+//         // Create a new user document asynchronously
+//         const newUser = await User.create({
+//             name,
+//             email,
+//             password,
+//             addresses,
+//             phoneNumber,
+//             apartment,
+//         });
+         
+//         // Use the user document to sign the token
+//         const token = jwt.sign({ id: newUser.id, name, email,
+//              isAdmin: true
+//              }, process.env.secretKey, { expiresIn: '5h' });
+
+//         res.status(201).json({
+//             success: true,
+//             // token,
+//             message: `User saved successfully with token: ${token}`,
+//         });
+//     }
+//     } catch (error) {
+//         console.error(error);
+//         res.status(500).json({
+//             success: false,
+//             message: 'Internal server error',
+//         });
+//     }
+// }; 
 
 // User Login
-const login = async (req: Request, res: Response) => {
+const userLogin = async (req: Request, res: Response) => {
     const { email, password } = req.body;
     try {
         const user = await User.findOne({ email });
@@ -82,6 +163,35 @@ const login = async (req: Request, res: Response) => {
         res.status(200).json({
             success: true,
             message: `User logged in successfully with token: ${token}`
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+const adminLogin = async (req: Request, res: Response) => {
+    const { email, password } = req.body;
+    try {
+        const admin = await Admin.findOne({ email });
+
+        if (!admin) {
+            return res.status(404).json({
+                success: false,
+                message: 'Admin not found'
+            });
+        }
+
+        const isPasswordValid = await admin.comparePassword(password);
+
+        if (!isPasswordValid) {
+            return res.status(401).json({ message: 'Invalid password' });
+        }
+
+        const token = admin.generateToken();
+
+        res.status(200).json({
+            success: true,
+            message: `Admin logged in successfully with token: ${token}`
         });
     } catch (error) {
         console.error(error);
@@ -183,42 +293,6 @@ const resetPassword = async (req: Request, res: Response) => {
 }
 
 
-// createUser
-// const addUser = async (req: CustomRequest, res: Response) => {
-//     const { name, email, password, phoneNumber, addresses } = req.body;
-
-// console.log("req.admin.isAdmin is: ", req.admin?.isAdmin)
-     
-//     if (!(req.admin?.isAdmin)) {
-//         return res.status(403).json({
-//             success: false,
-//             message: 'Permission denied. Only admin users can add users.',
-//         });
-//     }
-
-//     try {
-//         // Create a new user document
-//         const newUser = await User.create({
-//             name,
-//             email,
-//             password,
-//             phoneNumber,
-//             addresses,
-//         });
-
-//         res.status(201).json({
-//             success: true,
-//             user: newUser,
-//         });
-//     } catch (error) {
-//         console.error(error);
-//         res.status(500).json({
-//             success: false,
-//             message: 'Internal server error',
-//         });
-//     }
-// };
-
 
 // getSingleUser 
 
@@ -268,58 +342,61 @@ const getAllUsers = async (req: Request, res: Response) => {
 
 
 // updateUser
-// const updateUser = async (req: Request, res: Response) => {
-//     try {
+const updateUser = async (req: Request, res: Response) => {
+    try {
         
-//         const updateData = req.body;
-//         const records = await User.findByIdAndUpdate(req.params.id, updateData, { new: true });
+        const updateData = req.body;
+        const records = await User.findByIdAndUpdate(req.params.id, updateData, { new: true });
 
-//         if (!records) {
-//             res.status(404).json({
-//                 success: false,
-//                 message: "Record not found"
-//             });
-//         } else {
-//             res.status(200).json({
-//                 success: true,
-//                 message: 'User updated successfully'
-//             });
-//         }
+        if (!records) {
+            res.status(404).json({
+                success: false,
+                message: "Record not found"
+            });
+        } else {
+            res.status(200).json({
+                success: true,
+                message: 'User updated successfully'
+            });
+        }
         
-//     } catch (err) {
-//         res.status(500).send(err);
-//     }
-// }
+    } catch (err) {
+        res.status(500).send(err);
+    }
+}
 
 // deleteUser
-// const deleteUser = async (req: Request, res: Response) => {
-//     try {
+const deleteUser = async (req: Request, res: Response) => {
+    try {
 
-//         const records = await User.findByIdAndDelete(req.params.id);
-//         if (!records) {
-//             res.status(404).json({
-//                 success: false,
-//                 message: "Record not found"
-//             });
-//         } else {
-//             res.status(200).json({
-//                 success: true,
-//                 message: 'User deleted successfully'
-//             });
-//         }
-//     } catch (err) {
-//         res.status(500).send(err);
-//     }
-// }
+        const records = await User.findByIdAndDelete(req.params.id);
+        if (!records) {
+            res.status(404).json({
+                success: false,
+                message: "Record not found"
+            });
+        } else {
+            res.status(200).json({
+                success: true,
+                message: 'User deleted successfully'
+            });
+        }
+    } catch (err) {
+        res.status(500).send(err);
+    }
+}
 
 
-export { userRegister ,
-    // ,addUser, 
-    login, 
+export { 
+    // userRegister ,
+    addUser, 
+    userLogin, 
     forgotPassword,
     resetPassword, 
     getSingleUser
     , getAllUsers
-    // ,updateUser, 
-    // deleteUser
+    , adminRegister,
+    adminLogin
+    ,updateUser, 
+    deleteUser
 };

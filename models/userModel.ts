@@ -17,7 +17,7 @@ interface UserDocument extends Document {
   
     apartment: string;
     phoneNumber: string;
-    isAdmin: Boolean;
+    // isAdmin: Boolean;
     addresses: Address[];
     comparePassword(candidatePassword: string): Promise<boolean>;
     generateToken(): string;
@@ -54,10 +54,10 @@ const userSchema = new Schema<UserDocument>({
     //     enum: ["user", "admin"]
     // },
     
-    isAdmin: {
-        type: Boolean,
-        default: true,
-    },
+    // isAdmin: {
+    //     type: Boolean,
+    //     default: true,
+    // },
 
     phoneNumber: {
         type: String,
