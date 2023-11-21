@@ -1,6 +1,7 @@
 import express from 'express';
-import { userRegister , login, forgotPassword, resetPassword
-    // , addUser  , getSingleUser, getAllUsers,updateUser, deleteUser
+import { userRegister , login, forgotPassword, resetPassword,
+    // , addUser ,updateUser, deleteUser,
+     getSingleUser, getAllUsers
 }  from '../controllers/userController';
 const router = express.Router();
 
@@ -22,8 +23,8 @@ router.post('/resetPassword/:token', resetPassword);
 
 // router.use(authenticateAdmin);
 // router.post('/addUser', isAdmin ,addUser);
-// router.get('/getAllUsers',isAdmin, getAllUsers);
-// router.get('/getSingleUser/:id',isAdmin, getSingleUser);
+router.get('/getAllUsers', getAllUsers);
+router.get('/getSingleUser/:id', getSingleUser);
 
 // router.put('/updateUser/:id',isAdmin, updateUser);
 // router.delete('/deleteUser/:id', isAdmin,deleteUser)

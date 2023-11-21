@@ -425,8 +425,8 @@ export { userRegister ,
     login, 
     forgotPassword,
     resetPassword, 
-    // getSingleUser
-    // , getAllUsers
+    getSingleUser
+    , getAllUsers
     // ,updateUser, 
     // deleteUser
 };

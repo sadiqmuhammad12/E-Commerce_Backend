@@ -1,7 +1,8 @@
 import mongoose, { Document, Model, Schema } from 'mongoose';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-
+import dotenv from 'dotenv';
+dotenv.config();
 interface Address {
     street: string;
     city: string;
@@ -23,10 +24,10 @@ interface UserDocument extends Document {
 }
 
 const addressSchema = new Schema<Address>({
-    street: { type: String },
-    city: { type: String, required: true },
-    zip: { type: String, required: true },
-    country: { type: String, required: true },
+    street: { type: String , default : ''},
+    city: { type: String, default : '' , },
+    zip: { type: String, default : '' },
+    country: { type: String, default : '' },
 });
 
 const userSchema = new Schema<UserDocument>({
@@ -44,7 +45,8 @@ const userSchema = new Schema<UserDocument>({
         required: true
     }, 
     apartment : {
-        type : String
+        type : String,
+        default : ''
     },
     // role: {
     //     type: String,
@@ -87,7 +89,10 @@ userSchema.methods.comparePassword = async function(candidatePassword: string) {
 
 // Generate JWT token for the user
 userSchema.methods.generateToken = function() {
-    return jwt.sign({ _id: this._id }, 'sadiqkhangmuhammadsadiq', { expiresIn: '5h' });
+    if (!process.env.secretKey) {
+        throw new Error('Secret key is not defined');
+    }
+    return jwt.sign({ _id: this._id }, process.env.secretKey, { expiresIn: '5h' });
 };
 
 const User: Model<UserDocument> = mongoose.model('User', userSchema);
