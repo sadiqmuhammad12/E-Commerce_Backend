@@ -1,8 +1,13 @@
 import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+dotenv.config();
 
 const connectDb = async () => {
   try {
-    await mongoose.connect("mongodb+srv://sadiqmuhammad795:sadiqkhang123@cluster0.9zt68tx.mongodb.net/",
+    if (!process.env.mongodbUrl) {
+      throw new Error('MongoDB URL is not defined');
+   }
+    await mongoose.connect(process.env.mongodbUrl,
       {
         useNewUrlParser: true,
         useUnifiedTopology: true,
