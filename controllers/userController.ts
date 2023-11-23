@@ -171,6 +171,9 @@ const userLogin = async (req: Request, res: Response) => {
 };
 const adminLogin = async (req: Request, res: Response) => {
     const { email, password } = req.body;
+    if (!process.env.secretKey) {
+        throw new Error('Secret key is not defined');
+    }
     try {
         const admin = await Admin.findOne({ email });
 
@@ -187,8 +190,9 @@ const adminLogin = async (req: Request, res: Response) => {
             return res.status(401).json({ message: 'Invalid password' });
         }
 
-        const token = admin.generateToken();
-
+        // const token = admin.generateToken();
+        const token = jwt.sign({ id: admin.id,  email, isAdmin: true }, process.env.secretKey, { expiresIn: '5h' });
+         
         res.status(200).json({
             success: true,
             message: `Admin logged in successfully with token: ${token}`

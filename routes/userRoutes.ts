@@ -5,10 +5,10 @@ const router = express.Router();
 import authenticateAdmin from '../middleware/authenticateAdmin';
 import isAdmin from '../middleware/role';
 
-router.post('/adminLogin', adminLogin)
 router.post('/forgotPassword', forgotPassword);
 router.post('/resetPassword/:token', resetPassword);
 router.post('/adminRegister', adminRegister);
+router.post('/adminLogin', adminLogin)
 
 // Middleware
 router.use(authenticateAdmin);
