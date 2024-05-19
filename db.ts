@@ -9,10 +9,8 @@ const connectDb = async () => {
    }
     await mongoose.connect(process.env.mongodbUrl,
       {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
         dbName: "E-Commerce_Backend"
-      } as Parameters<typeof mongoose.connect>[1]
+      }
     );
     console.log('MongoDb is connected');
   } catch (error: any) {
